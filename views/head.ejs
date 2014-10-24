@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Map test</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css">
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="">
+    <meta name="keywords" content="">
+    <meta name="author" content="Stefan Hedman">
+</head>
+<body>
+    <div class="container">
+
+    	<div class="col-md-12">
+			<% if(typeof(errors) !== 'undefined' && errors.length){ %>
+			<div class="alert alert-danger" role="alert"><%=errors.join('<br/>')%></div>
+			<% } %>
+			<% if(typeof(success) !== 'undefined' && success.length){ %>
+			<div class="alert alert-success" role="alert"><%=success.join('<br/>')%></div>
+			<% } %>
+		</div>
