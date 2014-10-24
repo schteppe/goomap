@@ -66,6 +66,7 @@ exports.data = function(req, res, next){
 					polys: [],
 					trees: [],
 					highways: [],
+					fastfood: [],
 					bounds: [
 						[parseFloat(bounds.minlon), parseFloat(bounds.minlat)],
 						[parseFloat(bounds.maxlon), parseFloat(bounds.maxlat)]
@@ -126,6 +127,14 @@ exports.data = function(req, res, next){
 					var nodeElement = result.osm.node[i];
 					if(nodeElement.tag && nodeElement.tag.some(function(t){ return t.$.k === 'natural' && t.$.v === 'tree'; })){
 						data.trees.push(parseNodePosition(nodeElement));
+					}
+				}
+
+				// Fast food!
+				for (var i = 0; i < result.osm.node.length; i++) {
+					var nodeElement = result.osm.node[i];
+					if(nodeElement.tag && nodeElement.tag.some(function(t){ return t.$.k === 'amenity' && t.$.v === 'fast_food'; })){
+						data.fastfood.push(parseNodePosition(nodeElement));
 					}
 				}
 

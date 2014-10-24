@@ -23,6 +23,7 @@ require([
 	'goo/geometrypack/FilledPolygon',
 	'goo/geometrypack/Triangle',
 	'goo/math/Vector3',
+	'goo/entities/EntityUtils',
 
 	'goo/animationpack/handlers/SkeletonHandler',
 	'goo/animationpack/handlers/AnimationComponentHandler',
@@ -64,7 +65,8 @@ require([
 	PolyLine,
 	FilledPolygon,
 	Triangle,
-	Vector3
+	Vector3,
+	EntityUtils
 ) {
 	'use strict';
 
@@ -235,6 +237,23 @@ require([
 					var entity = gooRunner.world.createEntity(meshDatas[i], [0,0,0], treeMaterial).addToWorld();
 				}
 
+
+				// Fast food!
+				var burger = gooRunner.world.by.name('Burger').first();
+				for (var i = 0; i < data.fastfood.length; i++) {
+					var fastfood = data.fastfood[i];
+					var p = transform(fastfood);
+					var entity = EntityUtils.clone(gooRunner.world, burger, {});
+					entity.transformComponent.transform.translation.setd(p[0], height*3, p[1]);
+					entity.transformComponent.transform.scale.setd(5,5,5);
+					entity.transformComponent.transform.update();
+					entity.transformComponent.setUpdated()
+					entity.addToWorld()
+					entity.setTag('burger');
+					entity.hide();
+				}
+				burger.hide();
+
 				// Highways
 				meshBuilder = new MeshBuilder();
 				for (var i = 0; i < data.highways.length; i++) {
@@ -296,6 +315,10 @@ require([
 		document.addEventListener('keyup', function(e){
 			if(e.which == 72){
 				gooRunner.world.by.tag('highway').each(function(entity){
+					if(hidden) entity.show();
+					else entity.hide();
+				});
+				gooRunner.world.by.tag('burger').each(function(entity){
 					if(hidden) entity.show();
 					else entity.hide();
 				});
