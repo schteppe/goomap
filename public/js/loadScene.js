@@ -71,12 +71,6 @@ require([
 	function setup(gooRunner, loader) {
 		// Application code goes here!
 
-		/*
-		 To get a hold of entities, one can use the World's selection functions:
-		 var allEntities = gooRunner.world.getEntities();                  // all
-		 var entity      = gooRunner.world.by.name('EntityName').first();  // by name
-		 */
-
 		var buildingMaterial = new Material(ShaderLib.uber);
 		var groundMaterial = new Material(ShaderLib.uber);
 		var treeMaterial = new Material(ShaderLib.uber);
@@ -109,10 +103,6 @@ require([
 					return [x, y];
 				}
 
-				// Move camera to place
-				var cameraPos = transform([18.0988, 59.33412]);
-
-				gooRunner.world.by.name('Default Camera').first().setTranslation(new Vector3(cameraPos[0], 1, cameraPos[1]));
 
 				// Ground Quad
 				var tileMin = transform(data.bounds[0]);
@@ -122,6 +112,24 @@ require([
 				groundEntity.transformComponent.transform.rotation.rotateX(-Math.PI / 2);
 				groundEntity.transformComponent.transform.update();
 				groundEntity.transformComponent.setUpdated();
+
+
+				// Move camera to place
+				var cameraPos = transform([18.0988, 59.33412]);
+				var initPos = new Vector3(cameraPos[0], 1, cameraPos[1]);
+				var goonPos = new Vector3(cameraPos[0], 0, cameraPos[1]);
+				// Random!
+				goonPos.x = (0.5 - Math.random()) * groundQuad.xExtent + groundEntity.transformComponent.transform.translation.x;
+				goonPos.z = (0.5 - Math.random()) * groundQuad.yExtent + groundEntity.transformComponent.transform.translation.z;
+				var logoPos = new Vector3(cameraPos[0], height * 4, cameraPos[1]);
+				var goon = gooRunner.world.by.name('Goon').first();
+				var logo = gooRunner.world.by.name('Goo Logo').first();
+				logo.transformComponent.transform.scale.setd(20,20,20);
+				goon.transformComponent.transform.scale.setd(3,3,3);
+				goon.setTranslation(goonPos);
+				logo.setTranslation(logoPos);
+				gooRunner.world.by.name('Default Camera').first().setTranslation(initPos);
+
 
 				// Buildings
 				var meshBuilder = new MeshBuilder();
@@ -284,16 +292,23 @@ require([
 		});
 
 		var hidden = true;
+		var goonHidden = true;
 		document.addEventListener('keyup', function(e){
 			if(e.which == 72){
 				gooRunner.world.by.tag('highway').each(function(entity){
-					if(hidden)
-						entity.show();
-					else
-						entity.hide();
-
+					if(hidden) entity.show();
+					else entity.hide();
 				});
 				hidden = !hidden;
+			}
+
+			if(e.which == 71){
+				gooRunner.world.by.name('Goon').each(function(entity){
+					entity.transformComponent.transform.translation.y = goonHidden ? 4 * height : 0;
+					entity.transformComponent.transform.update();
+					entity.transformComponent.setUpdated();
+				});
+				goonHidden = !goonHidden;
 			}
 		});
 
