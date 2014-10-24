@@ -80,9 +80,11 @@ require([
 		var buildingMaterial = new Material(ShaderLib.uber);
 		var groundMaterial = new Material(ShaderLib.uber);
 		var treeMaterial = new Material(ShaderLib.uber);
+		var roadMaterial = new Material(ShaderLib.uber);
 		buildingMaterial.cullState.enabled = false;
 		groundMaterial.uniforms.materialDiffuse = [0,0.6,0,1];
 		treeMaterial.uniforms.materialDiffuse = [0,0.3,0,1];
+		roadMaterial.uniforms.materialDiffuse = [1,1,1,1];
 
 		var scale = 1000;
 		var height = 0.005 * scale;
@@ -92,7 +94,7 @@ require([
 			dataType: "json",
 			url: '/data.json',
 			success: function(data){
-
+				console.log(data)
 				// Transform long / lat coordinate to world space
 				function transform(p){
 					var x = (p[0] - data.bounds[0][0]) / (data.bounds[1][0] - data.bounds[0][0]);
@@ -140,8 +142,9 @@ require([
 							var v = transform(vertex);
 							verts.push(v[0], 0, v[1]);
 						});
+						verts.push(verts[0], verts[1], verts[2])
 						//console.log(verts)
-						var a = new PolyLine(verts, false);
+						var a = new PolyLine(verts, true);
 						var h = height * (1 + Math.random()*heightRandomness);
 						var b = new PolyLine([0,0,0,  0,h,0], false);
 						var mesh = a.pipe(b);
@@ -161,13 +164,19 @@ require([
 						});
 
 						var verts3 = [];
-						poly.push(poly[0])
 						poly.forEach(function (vertex){
 							var v = transform(vertex);
 							verts3.push(v[0], v[1]);
 						})
+						if(!PolyK.IsSimple(poly)){
+							console.log('nonsimple!')
+							continue;
+						}
 						var indices = PolyK.Triangulate(verts3);
 						var verts4 = [];
+						if(indices.length == 3 * 3){
+							//continue;
+						}
 						for (var j = 0; j < indices.length; j+=3) {
 							var idx0 = indices[j];
 							var idx1 = indices[j+1];
@@ -183,7 +192,6 @@ require([
 								idx0 = idx1;
 								idx1 = tmp;
 							}
-
 							var tri = new Triangle([
 								verts3[2*idx1], verts3[2*idx1+1], 0,
 								verts3[2*idx0], verts3[2*idx0+1], 0,
@@ -218,9 +226,74 @@ require([
 				for (var i = 0; i < meshDatas.length; i++) {
 					var entity = gooRunner.world.createEntity(meshDatas[i], [0,0,0], treeMaterial).addToWorld();
 				}
+
+				// Highways
+				meshBuilder = new MeshBuilder();
+				for (var i = 0; i < data.highways.length; i++) {
+					var highway = data.highways[i];
+
+					var highwayVerts = [];
+					highway.forEach(function(vertex){
+						var v = transform(vertex);
+						highwayVerts.push(v[0], 0, v[1]);
+					});
+
+					// Just create box for now
+					var mesh;
+					if(false){
+						for (var j = 0; j < highwayVerts.length; j+=3) {
+							mesh = new Box(1,1,1);
+							//console.log(mesh)
+							var localTrans = new Transform();
+							localTrans.translation.setd(highwayVerts[j], 1, highwayVerts[j+2]);
+							localTrans.update();
+							meshBuilder.addMeshData(mesh, localTrans);
+						}
+					} else {
+						// Polyline
+						/*var highwayVerts = [];
+						for (var j = 0; j < highway.length; j++) {
+							var p = transform(highway[j]);
+							highwayVerts.push(p[0], 0, p[1]);
+							//var entity = gooRunner.world.createEntity(mesh, [0,0,0], roadMaterial).addToWorld();
+							//console.log(highwayVerts);
+						}
+						*/
+
+						// console.log(highwayVerts)
+						var line = new PolyLine(highwayVerts, false);
+						// var orthoLine = new PolyLine([0,0,-1,  0,0,1,  1,0,1, 1,0,-1], false);
+						// mesh = orthoLine.pipe(line);
+
+						//console.log(mesh)
+						var localTrans = new Transform();
+						localTrans.translation.y = 1;
+						//localTrans.rotation.rotateX(-Math.PI / 2);
+						localTrans.update();
+						meshBuilder.addMeshData(line, localTrans);
+
+						var entity = gooRunner.world.createEntity(line, [0,0.01,0], roadMaterial).addToWorld();
+						entity.hide();
+						entity.setTag('highway');
+					}
+				}
 			},
 			error: function(err){
 				console.error(err);
+			}
+		});
+
+		var hidden = true;
+		document.addEventListener('keyup', function(e){
+			if(e.which == 72){
+				gooRunner.world.by.tag('highway').each(function(entity){
+					if(hidden)
+						entity.show();
+					else
+						entity.hide();
+
+				});
+				hidden = !hidden;
 			}
 		});
 

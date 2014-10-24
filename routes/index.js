@@ -24,9 +24,12 @@ exports.data = function(req, res, next){
 
 		// Traverse nodeRefs
 		var poly = [];
+		var usedRefs = {};
 		for (var j = 0; j < wayElement.nd.length; j++) {
 			var nodeRefElement = wayElement.nd[j];
 			var nodeRef = parseInt(nodeRefElement.$.ref, 10);
+			if(usedRefs[nodeRef]) continue;
+			usedRefs[nodeRef] = true;
 			poly.push(nodesObject[nodeRef]);
 		}
 		return poly;
@@ -62,6 +65,7 @@ exports.data = function(req, res, next){
 				var data = {
 					polys: [],
 					trees: [],
+					highways: [],
 					bounds: [
 						[parseFloat(bounds.minlon), parseFloat(bounds.minlat)],
 						[parseFloat(bounds.maxlon), parseFloat(bounds.maxlat)]
@@ -81,14 +85,15 @@ exports.data = function(req, res, next){
 					var wayElement = result.osm.way[i];
 					ways[wayElement.$.id] = wayElement;
 
-					if(!wayElement.tag || (wayElement.tag && !wayElement.tag.some(function(t){
-						return t.$.k == "building";
-					}))){
-						continue;
-					}
+					if(!wayElement.tag) continue;
 
-					var poly = wayToPolygon(data, wayElement, nodes);
-					data.polys.push(poly);
+					if(wayElement.tag.some(function(t){ return t.$.k == "building"; })){
+						var poly = wayToPolygon(data, wayElement, nodes);
+						data.polys.push(poly);
+					} else if(wayElement.tag.some(function(t){ return t.$.k == "highway"; })){
+						var poly = wayToPolygon(data, wayElement, nodes);
+						data.highways.push(poly);
+					}
 				}
 
 				// Multipolygons!
@@ -113,14 +118,6 @@ exports.data = function(req, res, next){
 						var wayRef = parseInt(outerMemberElements[j].$.ref, 10);
 						var poly = wayToPolygon(data, ways[wayRef], nodes);
 						data.polys.push(poly);
-					}
-				}
-
-				// Trees!
-				for (var i = 0; i < result.osm.node.length; i++) {
-					var nodeElement = result.osm.node[i];
-					if(nodeElement.tag && nodeElement.tag.some(function(t){ return t.$.k === 'natural' && t.$.v === 'tree'; })){
-						data.trees.push(parseNodePosition(nodeElement));
 					}
 				}
 
